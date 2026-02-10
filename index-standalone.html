@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Trolleo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: #0a0e27;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 3px, rgba(0, 255, 255, 0.03) 4px);
+            animation: bgShift 20s ease infinite;
+        }
+
+        @keyframes bgShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .container {
+            background: rgba(15, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px 30px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 
+                0 0 60px rgba(0, 255, 255, 0.2),
+                inset 0 0 60px rgba(0, 255, 255, 0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #00ffff);
+            border-radius: 20px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .container:hover::before {
+            opacity: 0.3;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 2em;
+            font-weight: 900;
+            text-shadow: 
+                0 0 10px rgba(0, 255, 255, 0.5),
+                0 0 20px rgba(0, 255, 255, 0.3),
+                0 0 30px rgba(0, 255, 255, 0.2);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: rgba(0, 255, 255, 0.6);
+            font-size: 0.85em;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: glitchIn 0.5s ease;
+        }
+
+        @keyframes glitchIn {
+            0% { opacity: 0; transform: translateX(-10px); }
+            20% { opacity: 0.5; transform: translateX(10px); }
+            40% { opacity: 0.8; transform: translateX(-5px); }
+            60% { opacity: 1; transform: translateX(5px); }
+            80% { opacity: 1; transform: translateX(-2px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #00ffff 0%, #0088ff 100%);
+            color: #0a0e27;
+            border: none;
+            padding: 16px 40px;
+            margin: 8px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-trolleo {
+            background: linear-gradient(135deg, #ff00ff 0%, #ff0088 100%);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        .btn-trolleo:hover {
+            box-shadow: 0 0 40px rgba(255, 0, 255, 0.6);
+        }
+
+        .btn-back {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            padding: 12px 30px;
+            font-size: 0.85em;
+            margin-top: 15px;
+            color: #00ffff;
+        }
+
+        .btn-back:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .sound-btn {
+            display: block;
+            width: 100%;
+            margin: 12px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.2) 0%, rgba(255, 0, 136, 0.2) 100%);
+            border: 2px solid rgba(255, 0, 255, 0.4);
+            color: #ff00ff;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .sound-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateY(-50%);
+            transition: left 0.5s;
+        }
+
+        .sound-btn:hover::after {
+            left: 100%;
+        }
+
+        .sound-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+            border-color: rgba(255, 0, 255, 0.8);
+        }
+
+        .sound-btn:active {
+            transform: scale(0.98);
+        }
+
+        .sound-btn.sent {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.3) 0%, rgba(0, 255, 255, 0.3) 100%);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        input[type="password"],
+        input[type="text"] {
+            padding: 18px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 1.4em;
+            width: 100%;
+            margin: 20px 0;
+            text-align: center;
+            background: rgba(0, 20, 40, 0.5);
+            color: #00ffff;
+            letter-spacing: 12px;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        input::placeholder {
+            color: rgba(0, 255, 255, 0.3);
+            letter-spacing: 8px;
+        }
+
+        input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+            background: rgba(0, 30, 60, 0.7);
+        }
+
+        .error {
+            color: #ff0088;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 0.9em;
+            text-shadow: 0 0 10px rgba(255, 0, 136, 0.5);
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .status {
+            padding: 16px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-weight: 700;
+            font-size: 0.95em;
+            border: 2px solid;
+        }
+
+        .status-waiting {
+            background: rgba(255, 152, 0, 0.1);
+            border-color: rgba(255, 152, 0, 0.4);
+            color: #ffaa00;
+        }
+
+        .status-connected {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: rgba(0, 255, 136, 0.4);
+            color: #00ff88;
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); }
+        }
+
+        .status-error {
+            background: rgba(255, 0, 136, 0.1);
+            border-color: rgba(255, 0, 136, 0.4);
+            color: #ff0088;
+        }
+
+        .emoji-big {
+            font-size: 5em;
+            margin: 20px 0;
+            display: block;
+            filter: drop-shadow(0 0 20px currentColor);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .trolleo-listening {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 0, 255, 0.3);
+        }
+
+        .sound-wave {
+            display: none;
+            margin: 20px auto;
+            height: 60px;
+            gap: 6px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sound-wave.active {
+            display: flex;
+        }
+
+        .sound-wave span {
+            display: block;
+            width: 8px;
+            background: linear-gradient(180deg, #ff00ff, #00ffff);
+            border-radius: 4px;
+            box-shadow: 0 0 10px currentColor;
+            animation: wave 0.6s ease-in-out infinite;
+        }
+
+        .sound-wave span:nth-child(1) { height: 20px; animation-delay: 0s; }
+        .sound-wave span:nth-child(2) { height: 40px; animation-delay: 0.1s; }
+        .sound-wave span:nth-child(3) { height: 60px; animation-delay: 0.2s; }
+        .sound-wave span:nth-child(4) { height: 40px; animation-delay: 0.3s; }
+        .sound-wave span:nth-child(5) { height: 20px; animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        .warning-box {
+            background: rgba(255, 152, 0, 0.1);
+            border: 2px solid rgba(255, 152, 0, 0.4);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #ffaa00;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        .warning-box strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            color: #ffcc00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Pantalla Inicial -->
+        <div id="screen-initial" class="screen active">
+            <span class="emoji-big">🎭</span>
+            <h1>Sistema de Trolleo</h1>
+            <p class="subtitle">Modo de Operación</p>
+            
+            <div class="warning-box">
+                <strong>⚠️ INSTRUCCIONES:</strong>
+                Abre esta misma página en OTRA PESTAÑA o DISPOSITIVO para que funcione. Un dispositivo envía, el otro recibe.
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="goToCodeScreen()">🎮 COMANDOS</button>
+                <br>
+                <button class="btn btn-trolleo" onclick="startTrolleo()">😈 TROLLEO</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Codigo -->
+        <div id="screen-code" class="screen">
+            <span class="emoji-big">🔐</span>
+            <h1>Acceso Restringido</h1>
+            <p class="subtitle">Código de Seguridad</p>
+            <input type="password" id="code-input" placeholder="*****" maxlength="5" onkeydown="if(event.key==='Enter')checkCode()">
+            <p class="error" id="code-error"></p>
+            <button class="btn" onclick="checkCode()">ACCEDER</button>
+            <br>
+            <button class="btn btn-back" onclick="goToInitial()">VOLVER</button>
+        </div>
+
+        <!-- Pantalla de Consola de Comandos -->
+        <div id="screen-commands" class="screen">
+            <h1>🎮 Consola de Comandos</h1>
+            <div id="cmd-status" class="status status-connected">Sistema Activo</div>
+
+            <button class="sound-btn" onclick="sendSound(1)">🔊 SONIDO 1</button>
+            <button class="sound-btn" onclick="sendSound(2)">🔊 SONIDO 2</button>
+            <button class="sound-btn" onclick="sendSound(3)">🔊 SONIDO 3</button>
+            <button class="sound-btn" onclick="sendSound(4)">🔊 SONIDO 4</button>
+            <button class="sound-btn" onclick="sendSound(5)">🔊 SONIDO 5</button>
+
+            <button class="btn btn-back" onclick="goToInitial()">SALIR</button>
+        </div>
+
+        <!-- Pantalla de Trolleo -->
+        <div id="screen-trolleo" class="screen">
+            <div class="trolleo-listening">
+                <span class="emoji-big" id="trolleo-emoji">😈</span>
+                <h1>Modo Trolleo</h1>
+                <div id="trolleo-status" class="status status-connected">Esperando sonidos...</div>
+                <div class="sound-wave" id="sound-wave">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <p id="trolleo-sound-label" class="subtitle" style="margin-top:15px;"></p>
+            </div>
+            <button class="btn btn-back" onclick="stopTrolleo()">SALIR</button>
+        </div>
+    </div>
+
+    <!-- Precargar audios -->
+    <audio id="audio1" preload="auto" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    <audio id="audio2" preload="auto" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="audio3" preload="auto" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <audio id="audio4" preload="auto" src="https://assets.mixkit.co/active_storage/sfx/2016/2016-preview.mp3"></audio>
+    <audio id="audio5" preload="auto" src="https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3"></audio>
+
+    <script>
+        // BroadcastChannel para comunicación entre pestañas
+        const channel = new BroadcastChannel('trolleo-channel');
+        let checkInterval = null;
+
+        // --- Navigation ---
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function goToInitial() {
+            stopTrolleo();
+            showScreen('screen-initial');
+        }
+
+        function goToCodeScreen() {
+            showScreen('screen-code');
+            document.getElementById('code-input').value = '';
+            document.getElementById('code-error').textContent = '';
+            setTimeout(() => document.getElementById('code-input').focus(), 100);
+        }
+
+        // --- Code Check ---
+        function checkCode() {
+            const code = document.getElementById('code-input').value;
+            if (code === '82900') {
+                showScreen('screen-commands');
+            } else {
+                document.getElementById('code-error').textContent = '❌ Código incorrecto';
+                document.getElementById('code-input').value = '';
+                document.getElementById('code-input').focus();
+            }
+        }
+
+        // --- Commander: Send Sound ---
+        function sendSound(num) {
+            const buttons = document.querySelectorAll('.sound-btn');
+            const btn = buttons[num - 1];
+            const originalText = btn.textContent;
+
+            // Animación de envío
+            btn.classList.add('sent');
+            btn.textContent = '✅ ENVIADO!';
+
+            // Enviar por BroadcastChannel
+            channel.postMessage({
+                type: 'SOUND',
+                sound: num,
+                timestamp: Date.now()
+            });
+
+            // También guardar en localStorage como backup
+            localStorage.setItem('lastSound', JSON.stringify({
+                sound: num,
+                timestamp: Date.now()
+            }));
+
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('sent');
+            }, 800);
+        }
+
+        // --- Trolleo: Listen for sounds ---
+        function startTrolleo() {
+            showScreen('screen-trolleo');
+            
+            document.getElementById('trolleo-status').textContent = '✅ Conectado - Esperando sonidos...';
+            document.getElementById('trolleo-status').className = 'status status-connected';
+            document.getElementById('trolleo-sound-label').textContent = '';
+
+            // Escuchar mensajes del BroadcastChannel
+            channel.onmessage = (event) => {
+                if (event.data.type === 'SOUND') {
+                    playReceivedSound(event.data.sound);
+                }
+            };
+
+            // Backup: revisar localStorage cada segundo por si BroadcastChannel no funciona
+            let lastChecked = Date.now();
+            checkInterval = setInterval(() => {
+                const stored = localStorage.getItem('lastSound');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    if (data.timestamp > lastChecked) {
+                        lastChecked = data.timestamp;
+                        playReceivedSound(data.sound);
+                    }
+                }
+            }, 500);
+        }
+
+        function playReceivedSound(num) {
+            const audio = document.getElementById('audio' + num);
+            if (!audio) return;
+
+            // Reset y reproducir
+            audio.currentTime = 0;
+            audio.play().catch(() => {
+                // Autoplay bloqueado
+                document.getElementById('trolleo-status').textContent = '⚠️ Toca la pantalla para activar sonido';
+                document.getElementById('trolleo-status').className = 'status status-error';
+                document.addEventListener('click', function unlock() {
+                    audio.play().catch(() => {});
+                    document.removeEventListener('click', unlock);
+                    document.getElementById('trolleo-status').textContent = '✅ Conectado - Esperando sonidos...';
+                    document.getElementById('trolleo-status').className = 'status status-connected';
+                }, { once: true });
+            });
+
+            // Feedback visual
+            document.getElementById('trolleo-emoji').textContent = '😱';
+            document.getElementById('sound-wave').classList.add('active');
+            document.getElementById('trolleo-sound-label').textContent = `⚡ SONIDO ${num} ACTIVADO`;
+
+            setTimeout(() => {
+                document.getElementById('trolleo-emoji').textContent = '😈';
+                document.getElementById('sound-wave').classList.remove('active');
+                document.getElementById('trolleo-sound-label').textContent = '';
+            }, 3000);
+        }
+
+        function stopTrolleo() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+            channel.onmessage = null;
+        }
+
+        // Limpiar al cerrar
+        window.addEventListener('beforeunload', () => {
+            channel.close();
+        });
+    </script>
+</body>
+</html>
