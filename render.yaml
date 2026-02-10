@@ -1,0 +1,13 @@
+{
+  "services": [
+    {
+      "type": "web",
+      "name": "sistema-trolleo",
+      "env": "node",
+      "plan": "free",
+      "buildCommand": "npm install",
+      "startCommand": "npm start",
+      "healthCheckPath": "/"
+    }
+  ]
+}

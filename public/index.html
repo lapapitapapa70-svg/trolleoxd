@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Trolleo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px 30px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9em;
+            margin-bottom: 25px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            margin: 8px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-trolleo {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-trolleo:hover {
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-back {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 30px;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        .btn-back:hover {
+            background: rgba(255,255,255,0.2);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .sound-btn {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 18px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.05em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, background 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sound-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+        }
+
+        .sound-btn:active {
+            transform: scale(0.97);
+        }
+
+        .sound-btn.sent {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        input[type="password"],
+        input[type="text"] {
+            padding: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 14px;
+            font-size: 1.2em;
+            width: 100%;
+            margin: 15px 0;
+            text-align: center;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            letter-spacing: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input::placeholder {
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 2px;
+        }
+
+        input:focus {
+            border-color: #667eea;
+        }
+
+        .error {
+            color: #f5576c;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status {
+            padding: 14px;
+            border-radius: 12px;
+            margin: 15px 0;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        .status-waiting {
+            background: rgba(255, 152, 0, 0.15);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            color: #ffb74d;
+        }
+
+        .status-connected {
+            background: rgba(76, 175, 80, 0.15);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #81c784;
+        }
+
+        .status-error {
+            background: rgba(244, 67, 54, 0.15);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #ef5350;
+        }
+
+        .emoji-big {
+            font-size: 4em;
+            margin: 15px 0;
+            display: block;
+        }
+
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .sound-icon {
+            display: inline-block;
+            animation: none;
+        }
+
+        .sound-icon.playing {
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            50% { transform: rotate(15deg); }
+            75% { transform: rotate(-10deg); }
+        }
+
+        .trolleo-listening {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .trolleo-listening .emoji-big {
+            font-size: 3em;
+        }
+
+        .sound-wave {
+            display: none;
+            margin: 15px auto;
+            height: 40px;
+            gap: 4px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sound-wave.active {
+            display: flex;
+        }
+
+        .sound-wave span {
+            display: block;
+            width: 6px;
+            background: linear-gradient(180deg, #f093fb, #f5576c);
+            border-radius: 3px;
+            animation: wave 0.6s ease-in-out infinite;
+        }
+
+        .sound-wave span:nth-child(1) { height: 10px; animation-delay: 0s; }
+        .sound-wave span:nth-child(2) { height: 20px; animation-delay: 0.1s; }
+        .sound-wave span:nth-child(3) { height: 30px; animation-delay: 0.2s; }
+        .sound-wave span:nth-child(4) { height: 20px; animation-delay: 0.3s; }
+        .sound-wave span:nth-child(5) { height: 10px; animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Pantalla Inicial -->
+        <div id="screen-initial" class="screen active">
+            <span class="emoji-big">&#x1F3AD;</span>
+            <h1>Sistema de Trolleo</h1>
+            <p class="subtitle">Elige tu modo</p>
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="goToCodeScreen()">&#x1F3AE; COMANDOS</button>
+                <br>
+                <button class="btn btn-trolleo" onclick="startTrolleo()">&#x1F608; TROLLEO</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Codigo -->
+        <div id="screen-code" class="screen">
+            <span class="emoji-big">&#x1F512;</span>
+            <h1>Acceso Restringido</h1>
+            <p class="subtitle">Ingresa el codigo de acceso</p>
+            <input type="password" id="code-input" placeholder="*****" maxlength="5" onkeydown="if(event.key==='Enter')checkCode()">
+            <p class="error" id="code-error"></p>
+            <button class="btn" onclick="checkCode()">ACCEDER</button>
+            <br>
+            <button class="btn btn-back" onclick="goToInitial()">VOLVER</button>
+        </div>
+
+        <!-- Pantalla de Consola de Comandos -->
+        <div id="screen-commands" class="screen">
+            <h1>&#x1F3AE; Consola de Comandos</h1>
+            <div id="cmd-status" class="status status-connected">Listo para enviar sonidos</div>
+
+            <button class="sound-btn" onclick="sendSound(1)">&#x1F50A; Sonido 1</button>
+            <button class="sound-btn" onclick="sendSound(2)">&#x1F50A; Sonido 2</button>
+            <button class="sound-btn" onclick="sendSound(3)">&#x1F50A; Sonido 3</button>
+            <button class="sound-btn" onclick="sendSound(4)">&#x1F50A; Sonido 4</button>
+            <button class="sound-btn" onclick="sendSound(5)">&#x1F50A; Sonido 5</button>
+
+            <button class="btn btn-back" onclick="goToInitial()">SALIR</button>
+        </div>
+
+        <!-- Pantalla de Trolleo -->
+        <div id="screen-trolleo" class="screen">
+            <div class="trolleo-listening">
+                <span class="emoji-big pulse" id="trolleo-emoji">&#x1F608;</span>
+                <h1>Modo Trolleo</h1>
+                <div id="trolleo-status" class="status status-waiting">Conectando...</div>
+                <div class="sound-wave" id="sound-wave">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <p id="trolleo-sound-label" class="subtitle" style="margin-top:10px;"></p>
+            </div>
+            <button class="btn btn-back" onclick="stopTrolleo()">SALIR</button>
+        </div>
+    </div>
+
+    <!-- Precargar audios -->
+    <audio id="audio1" preload="auto" src="sonidos/sonido1.mp3"></audio>
+    <audio id="audio2" preload="auto" src="sonidos/sonido2.mp3"></audio>
+    <audio id="audio3" preload="auto" src="sonidos/sonido3.mp3"></audio>
+    <audio id="audio4" preload="auto" src="sonidos/sonido4.mp3"></audio>
+    <audio id="audio5" preload="auto" src="sonidos/sonido5.mp3"></audio>
+
+    <script>
+        let pollInterval = null;
+        let lastTimestamp = 0;
+
+        // --- Navigation ---
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function goToInitial() {
+            stopTrolleo();
+            showScreen('screen-initial');
+        }
+
+        function goToCodeScreen() {
+            showScreen('screen-code');
+            document.getElementById('code-input').value = '';
+            document.getElementById('code-error').textContent = '';
+            setTimeout(() => document.getElementById('code-input').focus(), 100);
+        }
+
+        // --- Code Check ---
+        function checkCode() {
+            const code = document.getElementById('code-input').value;
+            if (code === '82900') {
+                showScreen('screen-commands');
+            } else {
+                document.getElementById('code-error').textContent = 'Codigo incorrecto';
+                document.getElementById('code-input').value = '';
+                document.getElementById('code-input').focus();
+            }
+        }
+
+        // --- Commander: Send Sound ---
+        async function sendSound(num) {
+            const buttons = document.querySelectorAll('.sound-btn');
+            const btn = buttons[num - 1];
+            const originalText = btn.textContent;
+
+            btn.classList.add('sent');
+            btn.textContent = '\u2705 ENVIADO!';
+
+            try {
+                await fetch('/api/send-sound', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sound: num }),
+                });
+            } catch (e) {
+                btn.textContent = '\u274C Error';
+                document.getElementById('cmd-status').textContent = 'Error al enviar sonido';
+                document.getElementById('cmd-status').className = 'status status-error';
+            }
+
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('sent');
+            }, 600);
+        }
+
+        // --- Trolleo: Poll for sounds ---
+        function startTrolleo() {
+            showScreen('screen-trolleo');
+            lastTimestamp = Date.now();
+
+            document.getElementById('trolleo-status').textContent = 'Conectado - Esperando sonidos...';
+            document.getElementById('trolleo-status').className = 'status status-connected';
+            document.getElementById('trolleo-sound-label').textContent = '';
+
+            // Start polling every 500ms
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(pollForSound, 500);
+        }
+
+        async function pollForSound() {
+            try {
+                const res = await fetch('/api/poll-sound?since=' + lastTimestamp);
+                const data = await res.json();
+
+                if (data.sound && data.timestamp) {
+                    lastTimestamp = data.timestamp;
+                    playReceivedSound(data.sound);
+                }
+            } catch (e) {
+                // Silently retry on next poll
+            }
+        }
+
+        function playReceivedSound(num) {
+            const audio = document.getElementById('audio' + num);
+            if (!audio) return;
+
+            // Reset and play
+            audio.currentTime = 0;
+            audio.play().catch(() => {
+                // Autoplay blocked - show message
+                document.getElementById('trolleo-status').textContent = 'Toca la pantalla para activar sonido';
+                document.getElementById('trolleo-status').className = 'status status-error';
+                document.addEventListener('click', function unlock() {
+                    audio.play().catch(() => {});
+                    document.removeEventListener('click', unlock);
+                    document.getElementById('trolleo-status').textContent = 'Conectado - Esperando sonidos...';
+                    document.getElementById('trolleo-status').className = 'status status-connected';
+                }, { once: true });
+            });
+
+            // Visual feedback
+            document.getElementById('trolleo-emoji').textContent = '\uD83D\uDE31';
+            document.getElementById('sound-wave').classList.add('active');
+            document.getElementById('trolleo-sound-label').textContent = 'Reproduciendo Sonido ' + num;
+
+            setTimeout(() => {
+                document.getElementById('trolleo-emoji').textContent = '\uD83D\uDE08';
+                document.getElementById('sound-wave').classList.remove('active');
+                document.getElementById('trolleo-sound-label').textContent = '';
+            }, 3000);
+        }
+
+        function stopTrolleo() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+            showScreen('screen-initial');
+        }
+    </script>
+</body>
+</html>
